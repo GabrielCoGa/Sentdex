@@ -33,13 +33,24 @@ while True:
                 print("Connection closed by the server")
                 sys.exit()
 
-            username_length = int(username_length.decode("utf-8").strip())
+            username_length = int(username_header.decode("utf-8").strip())
             username = client_socket.recv(username_length).decode("utf-8")
-            
 
+            message_header = client_socket.recv(HEADER_LENGTH)
+            username_length = int(username_header.decode("utf-8").strip())
+            message = client_socket.recv(username_length).decode("utf-8")
 
+            print(f"{username} > {message}")
 
-    except:
-        pass
+    except IOError as e:
+        if e.errno == errno.EAGAIN or (e.errno == errno.EWOULDBLOCK):
+            print('Reading error', str(e))
+            sys.exit()
+        continue
+
+    except Exception as error:
+        print('General error', error)
+        sys.exit()
+
 
 
