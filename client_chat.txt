@@ -2,7 +2,6 @@ Este código en Python implementa un cliente de chat TCP que se conecta a un ser
  en la misma máquina (127.0.0.1) y en el puerto 1234. Vamos a desglosarlo paso a paso:
 
 🧩 Importación de módulos
-
     import socket
     import select
     import errno
@@ -14,7 +13,6 @@ errno: para manejar errores específicos del sistema.
 sys: para salir del programa si ocurre un error.
 
 ⚙️ Configuración inicial
-
     HEADER_LENGTH = 10
     IP = "127.0.0.1"
     PORT = 1234
@@ -29,7 +27,6 @@ IP y PORT: dirección y puerto del servidor al que se conecta el cliente.
 Se solicita al usuario que ingrese su nombre de usuario.
 
 🔌 Conexión al servidor
-
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((IP, PORT))
     client_socket.setblocking(False)
@@ -39,7 +36,6 @@ Se conecta al servidor.
 Se configura el socket como no bloqueante, lo que significa que no se detiene esperando datos.
 
 📤 Envío del nombre de usuario
-
     username = my_username.encode("utf-8")
     username_header = f"{len(username):<{HEADER_LENGTH}}".encode("utf-8")
     client_socket.send(username_header + username)
@@ -49,7 +45,6 @@ Se crea un encabezado de longitud fija que indica cuántos bytes tiene el nombre
 Se envía el encabezado seguido del nombre.
 
 🔁 Bucle principal
-
 while True:
     message = input(f"{my_username} > ")
     message = ""
@@ -59,7 +54,6 @@ Se pide al usuario que escriba un mensaje.
 por lo que nunca se envía nada.
 
 📤 Envío de mensajes
-
 if message:
     message = message.encode("utf-8")
     message_header = f"{len(message):<{HEADER_LENGTH}}".encode("utf-8")
@@ -68,22 +62,18 @@ if message:
 Si el mensaje no está vacío, se codifica y se envía con su encabezado.
 
 📥 Recepción de mensajes
-python
 try:
     while True:
         username_header = client_socket.recv(HEADER_LENGTH)
         ...
         print(f"{username} > {message}")
+
 Se intenta recibir datos del servidor.
-
 Se lee el encabezado del nombre de usuario, luego el nombre.
-
 Se lee el encabezado del mensaje, luego el mensaje.
-
 Se imprime el mensaje recibido.
 
 ⚠️ Manejo de errores
-python
 except IOError as e:
     if e.errno == errno.EAGAIN and (e.errno == errno.EWOULDBLOCK):
         print('Reading error', str(e))
@@ -93,15 +83,13 @@ except IOError as e:
 except Exception as error:
     print('General error', error)
     sys.exit()
-Si ocurre un error de entrada/salida, se imprime y se sale del programa.
 
+Si ocurre un error de entrada/salida, se imprime y se sale del programa.
 Si ocurre cualquier otro error, también se imprime y se sale.
 
 🧠 Observaciones
 El código está diseñado para funcionar con un servidor que sigue el mismo protocolo de encabezado fijo.
-
 El error message = "" impide que se envíen mensajes.
-
 Aunque se importa select, no se usa en este fragmento.
 
 
@@ -109,7 +97,9 @@ Perfecto! El error principal en tu código está en esta línea:
 
 python
 message = ""
-Justo después de que el usuario escribe su mensaje, esta línea borra el contenido, por lo que nunca se envía nada al servidor. Para corregirlo, simplemente elimina esa línea. Aquí tienes el fragmento corregido:
+Justo después de que el usuario escribe su mensaje, esta línea borra el contenido,
+por lo que nunca se envía nada al servidor. Para corregirlo, simplemente elimina esa línea.
+Aquí tienes el fragmento corregido:
 
 ✅ Código corregido (solo la parte del bucle principal)
 python
@@ -120,25 +110,21 @@ while True:
         message = message.encode("utf-8")
         message_header = f"{len(message):<{HEADER_LENGTH}}".encode("utf-8")
         client_socket.send(message_header + message)
+
 🛠️ Recomendaciones adicionales
 Evita duplicar la lectura del encabezado del nombre de usuario: En esta parte del código:
+    message_header = client_socket.recv(HEADER_LENGTH)
+    username_length = int(username_header.decode("utf-8").strip())
+    message = client_socket.recv(username_length).decode("utf-8")
 
-python
-message_header = client_socket.recv(HEADER_LENGTH)
-username_length = int(username_header.decode("utf-8").strip())
-message = client_socket.recv(username_length).decode("utf-8")
 Estás usando username_header en lugar de message_header para obtener la longitud del mensaje. Debería ser:
+    message_length = int(message_header.decode("utf-8").strip())
+    message = client_socket.recv(message_length).decode("utf-8")
 
-python
-message_length = int(message_header.decode("utf-8").strip())
-message = client_socket.recv(message_length).decode("utf-8")
 Usa or en lugar de and en el manejo de errores:
+    if e.errno == errno.EAGAIN and (e.errno == errno.EWOULDBLOCK):
 
-python
-if e.errno == errno.EAGAIN and (e.errno == errno.EWOULDBLOCK):
 Esto nunca se cumple porque e.errno no puede ser ambos a la vez. Cámbialo por:
-
-python
-if e.errno == errno.EAGAIN or e.errno == errno.EWOULDBLOCK:
+    if e.errno == errno.EAGAIN or e.errno == errno.EWOULDBLOCK:
 
 

@@ -1,7 +1,8 @@
-Este código en Python implementa un servidor de chat básico que permite a múltiples clientes conectarse y enviarse mensajes entre sí. Aquí te explico paso a paso lo que hace cada parte:
+Este código en Python implementa un servidor de chat básico que permite a múltiples clientes conectarse
+y enviarse mensajes entre sí.
+Aquí te explico paso a paso lo que hace cada parte:
 
 🧱 Importación de módulos
-python
     import socket
     import select
 
@@ -9,12 +10,11 @@ socket: permite la comunicación entre computadoras a través de la red.
 select: permite monitorear múltiples sockets para saber cuáles están listos para leer o tienen errores.
 
 ⚙️ Configuración inicial
-    python
     HEADER_LENGTH = 10
     IP = "127.0.0.1"
     PORT = 1234
-    HEADER_LENGTH: define el tamaño del encabezado que indica la longitud del mensaje.
 
+HEADER_LENGTH: define el tamaño del encabezado que indica la longitud del mensaje.
 IP y PORT: dirección local y puerto donde el servidor escuchará conexiones.
 
 🖧 Creación del socket del servidor
@@ -24,7 +24,21 @@ IP y PORT: dirección local y puerto donde el servidor escuchará conexiones.
     server_socket.listen()
 
 Se crea un socket TCP.
+
+server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) -> Esta línea permite reutilizar la dirección IP y
+el puerto incluso si el socket anterior que los usaba está en estado TIME_WAIT (una especie de espera técnica
+que ocurre después de cerrar una conexión).
+    server_socket: es el socket que estás configurando.
+    .setsockopt(...): método que permite establecer opciones en el socket.
+    socket.SOL_SOCKET: indica que la opción se aplica al nivel del socket (no al protocolo TCP/UDP).
+    socket.SO_REUSEADDR: es la opción que permite reutilizar la dirección.
+    1: activa la opción (0 la desactivaría).
+Sin esta opción, si cierras el servidor y lo reinicias rápidamente, podrías obtener un error como:
+OSError: [Errno 98] Address already in use
+Esto ocurre porque el sistema operativo aún tiene la dirección y el puerto "reservados" por el socket anterior.
+Al usar SO_REUSEADDR, le dices al sistema: “Está bien, déjame usar esa dirección y puerto de nuevo.”
 SO_REUSEADDR: permite reutilizar el puerto si el servidor se reinicia.
+
 bind: asocia el socket a la IP y puerto.
 listen: empieza a escuchar conexiones entrantes.
 
